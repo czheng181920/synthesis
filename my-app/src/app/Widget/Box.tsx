@@ -1,8 +1,4 @@
-import {
-  motion,
-  PanInfo,
-  useMotionValue,
-} from 'framer-motion';
+import { motion, PanInfo, useMotionValue } from 'framer-motion';
 import { useState } from 'react';
 
 function Box({
@@ -20,7 +16,7 @@ function Box({
   const y = useMotionValue(0);
 
   const [isPastThreshold, setIsPastThreshold] = useState(false);
-  const THRESHOLD = boxHeight * 2;
+  const THRESHOLD = boxHeight;
 
   const handleDrag = (_: PointerEvent, info: PanInfo) => {
     const { x: dx, y: dy } = info.offset;

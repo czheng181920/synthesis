@@ -7,13 +7,14 @@ import Stack from './Widget/Stack';
 import Label from './Widget/Label';
 
 export default function Home() {
-  // this needs to be on the widget
   const divRef = useRef<HTMLDivElement>(null);
   const [gap, setGap] = useState(1);
   const [numLeftBoxes, setNumLeftBoxes] = useState(5);
   const [numRightBoxes, setNumRightBoxes] = useState(10);
   const [boxHeight, setBoxHeight] = useState(30);
   const [widgetHeight, setWidgetHeight] = useState(0);
+  const [interactiveMode, setInteractiveMode] = useState('addRemove'); // addRemove, compare modes
+  const [isInputMode, setIsInputMode] = useState(false); //false when it is just a label, true when it is an input
 
   // Create a ResizeObserver to recalculate the gap based off of the height of the widget
   useEffect(() => {
@@ -45,7 +46,11 @@ export default function Home() {
 
   // increment the number of boxes in the stack. can specify if its the
   // left or right stack. also can specify if you wan tto increment or decrement
-  function incrementBox(left: boolean, increment: boolean, isDragging: boolean = false) {
+  function incrementBox(
+    left: boolean,
+    increment: boolean,
+    isDragging: boolean = false
+  ) {
     if (increment && isDragging) return;
     if (left) {
       if (increment && numLeftBoxes === 10) return;
@@ -76,28 +81,44 @@ export default function Home() {
         ref={divRef}
         style={{ paddingTop: boxHeight, paddingBottom: boxHeight }}
       >
-        <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 bg-gray-300 flex flex-col gap-2 items-center justify-center">
-          <Stack
-            left={true}
-            gap={gap}
-            numBoxes={numLeftBoxes}
-            boxHeight={boxHeight}
-            incrementBox={incrementBox}
-          />
-          <Label />
+        <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 bg-gray-300 h-full">
+          <div className="w-full" style={{ height: '95%' }}>
+            <Stack
+              left={true}
+              gap={gap}
+              numBoxes={numLeftBoxes}
+              boxHeight={boxHeight}
+              incrementBox={incrementBox}
+            />
+          </div>
+          <div className="w-full" style={{ height: '5%' }}>
+            <Label
+              text={numLeftBoxes}
+              input={setNumLeftBoxes}
+              inputMode={isInputMode}
+            />
+          </div>
         </div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-300 flex  items-center justify-center">
           =
         </div>
-        <div className="absolute top-1/2 right-1/3 translate-x-1/2 -translate-y-1/2 bg-gray-300 flex flex-col gap-2 items-center justify-center">
-          <Stack
-            left={false}
-            gap={gap}
-            numBoxes={numRightBoxes}
-            boxHeight={boxHeight}
-            incrementBox={incrementBox}
-          />
-          <Label />
+        <div className="absolute top-1/2 right-1/3 translate-x-1/2 -translate-y-1/2 bg-gray-300 h-full ">
+          <div className="w-full" style={{ height: '95%' }}>
+            <Stack
+              left={false}
+              gap={gap}
+              numBoxes={numRightBoxes}
+              boxHeight={boxHeight}
+              incrementBox={incrementBox}
+            />
+          </div>
+          <div className="w-full" style={{ height: '5%' }}>
+            <Label
+              text={numRightBoxes}
+              input={setNumRightBoxes}
+              inputMode={isInputMode}
+            />
+          </div>
         </div>
       </div>
 
