@@ -12,6 +12,7 @@ interface StackProps {
     increment: boolean,
     isDragging: boolean
   ) => void;
+  interactiveMode: string;
 }
 
 export default function Stack({
@@ -20,14 +21,21 @@ export default function Stack({
   numBoxes,
   boxHeight,
   incrementBox,
+  interactiveMode,
 }: StackProps) {
   const [isDragging, setIsDragging] = useState(false);
 
+  const onClick = () => {
+    if (interactiveMode === 'addRemove') {
+      incrementBox(left, true, isDragging);
+    }
+  };
+
   return (
     <motion.div
-      className={`relative flex flex-col p-1 items-center justify-center w-full h-full bg-gray-500`}
-      style={{ gap: `${gap}px`, transition: 'all 1s ease' }}
-      onClick={() => incrementBox(left, true, isDragging)}
+      className={`relative flex flex-col p-1 items-center justify-center w-full bg-gray-500`}
+      style={{ gap: `${gap}px`, transition: 'all 2s ease' }}
+      onClick={onClick}
     >
       {Array.from({ length: numBoxes }).map((_, i) => (
         <Box
@@ -36,6 +44,7 @@ export default function Stack({
           boxHeight={boxHeight}
           setDragging={setIsDragging}
           incrementBox={incrementBox}
+          interactiveMode={interactiveMode}
         />
       ))}
     </motion.div>

@@ -6,11 +6,13 @@ function Box({
   boxHeight,
   setDragging,
   incrementBox,
+  interactiveMode,
 }: {
   left: boolean;
   boxHeight: number;
   setDragging: (drag: boolean) => void;
   incrementBox: (left: boolean, increment: boolean, isDragging: false) => void;
+  interactiveMode: string;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -51,10 +53,10 @@ function Box({
         x,
         y,
         opacity: isPastThreshold ? 0.5 : 1,
-        cursor: 'grab',
+        cursor: interactiveMode === 'addRemove' ? 'grab' : 'auto',
         userSelect: 'none',
       }}
-      drag
+      drag={interactiveMode === 'addRemove' ? true : false}
       onDrag={handleDrag}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
