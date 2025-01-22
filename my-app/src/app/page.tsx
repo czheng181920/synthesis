@@ -7,7 +7,9 @@ import Stack from './Widget/Stack';
 import Label from './Widget/Label';
 import CompareZone from './Widget/CompareZone';
 import Line from './Widget/Line';
-import { source } from 'framer-motion/client';
+import { Bounce, toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 interface Coordinates {
   x: number;
   y: number;
@@ -38,6 +40,7 @@ export default function Home() {
     useState<RefObject<HTMLDivElement | null> | null>(null);
   const [sourceCenter, setSourceCenter] = useState<Coordinates>({ x: 0, y: 0 });
   const [mousePos, setMousePos] = useState<Coordinates>({ x: 0, y: 0 });
+  const [alignLines, setAlignLines] = useState(false);
 
   // Create a ResizeObserver to recalculate the gap based off of the height of the widget
   useEffect(() => {
@@ -76,6 +79,41 @@ export default function Home() {
   }, [isDragging]);
 
   useEffect(() => {
+    const handleDrag = (e: MouseEvent) => {
+      if (sourceDiv === null) return; //means we havent started a drag from one of the compare zones
+      if (isInDiv(e, sourceDiv)) return; //dont do anything if we are still in the source div
+      if (!isDragging) {
+        setMousePos({ x: e.clientX, y: e.clientY });
+        setDestinationDiv();
+        setIsDragging(true); //prevents onclick function from firing
+      }
+      if (isDragging) {
+        setMousePos({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    const handleDragEnd = (e: MouseEvent) => {
+      setIsDragging(false);
+
+      if (isInDiv(e, targetDiv)) {
+        if (
+          (sourceDiv === topLeftRef && targetDiv === topRightRef) ||
+          (sourceDiv === topRightRef && targetDiv === topLeftRef)
+        ) {
+          setIsTopVisible(true);
+        } else if (
+          (sourceDiv === bottomLeftRef && targetDiv === bottomRightRef) ||
+          (sourceDiv === bottomRightRef && targetDiv === bottomLeftRef)
+        ) {
+          setIsBottomVisible(true);
+        }
+      }
+      //reset all drag state
+      setSourceDiv(null);
+      setSourceCenter({ x: 0, y: 0 });
+      setMousePos({ x: 0, y: 0 });
+      setIsDragging(false);
+    };
     window.addEventListener('mousemove', handleDrag);
     window.addEventListener('mouseup', handleDragEnd);
     return () => {
@@ -106,6 +144,8 @@ export default function Home() {
         y: rect.top + rect.height / 2,
       };
       setSourceDiv(divRef);
+      console.log('setting source div', divRef);
+
       setSourceCenter(center);
       setIsDragging(false); // reset dragging state
     }
@@ -127,50 +167,6 @@ export default function Home() {
       }
     }
     return false;
-  };
-
-  const handleDrag = (e: MouseEvent) => {
-    if (sourceDiv === null) return; //means we havent started a drag from one of the compare zones
-    if (isInDiv(e, sourceDiv)) return; //dont do anything if we are still in the source div
-    console.log('dragging past div ');
-    if (!isDragging) {
-      setMousePos({ x: e.clientX, y: e.clientY });
-      setDestinationDiv();
-      setIsDragging(true); //prevents onclick function from firing
-    }
-    if (isDragging) {
-      console.log('dragging for realz');
-      setMousePos({ x: e.clientX, y: e.clientY });
-      console.log('sourcecenter', sourceCenter);
-      console.log('mousePos', mousePos);
-    }
-  };
-
-  const handleDragEnd = (e: MouseEvent) => {
-    setIsDragging(false);
-    console.log('drag end');
-    console.log('targetDiv', targetDiv);
-    console.log('isintargetdiv', isInDiv(e, targetDiv));
-    console.log('logging source div', topRightRef, sourceDiv, targetDiv);
-
-    if (isInDiv(e, targetDiv)) {
-      if (
-        (sourceDiv === topLeftRef && targetDiv === topRightRef) ||
-        (sourceDiv === topRightRef && targetDiv === topLeftRef)
-      ) {
-        setIsTopVisible(true);
-      } else if (
-        (sourceDiv === bottomLeftRef && targetDiv === bottomRightRef) ||
-        (sourceDiv === bottomRightRef && targetDiv === bottomLeftRef)
-      ) {
-        setIsBottomVisible(true);
-      }
-    }
-    //reset all drag state
-    setSourceDiv(null);
-    setSourceCenter({ x: 0, y: 0 });
-    setMousePos({ x: 0, y: 0 });
-    setIsDragging(false);
   };
 
   // increment the number of boxes in the stack. can specify if its the
@@ -206,6 +202,30 @@ export default function Home() {
     setLastClickedY(lastClicked[1]);
   }
 
+  const comparison = () => {
+    if (numLeftBoxes === numRightBoxes) return '=';
+    if (numLeftBoxes > numRightBoxes) return '>';
+    return '<';
+  };
+
+  const toggleAlignLines = () => {
+    if (!alignLines && (!isTopVisible || !isBottomVisible)) {
+      toast.error('Please draw both compare lines first', {
+        autoClose: 5000,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'light',
+        transition: Bounce,
+      });
+    } else if (!alignLines) {
+      setAlignLines(true);
+    } else {
+      setAlignLines(false);
+    }
+  };
+
   return (
     <div
       className=" grid 
@@ -220,14 +240,25 @@ export default function Home() {
     >
       {/* Widget */}
       <div
-        className="relative w-full h-full bg-gray-100"
+        className="relative w-full h-full"
         ref={divRef}
-        style={{ paddingTop: boxHeight, paddingBottom: boxHeight }}
+        style={{
+          paddingTop: boxHeight,
+          paddingBottom: boxHeight,
+          background: 'rgba(10,54,81,255)',
+        }}
       >
-        <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 bg-gray-300 h-full">
+        <div
+          className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 h-full"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,0) 100%)',
+            width: `${Math.max(boxHeight * 1.5, 16 * 16)}px`,
+          }}
+        >
           <div
             className="w-full flex flex-col items-center justify-center"
-            style={{ height: '95%' }}
+            style={{ height: '90%' }}
           >
             <CompareZone
               x={0}
@@ -264,21 +295,43 @@ export default function Home() {
               isDragging={isDragging}
             />
           </div>
-          <div className="w-full" style={{ height: '5%' }}>
+          <div
+            className="w-full flex flex-row items-center justify-center"
+            style={{ height: '10%' }}
+          >
             <Label
               text={numLeftBoxes}
               input={setNumLeftBoxes}
               inputMode={isInputMode}
+              interactiveMode={interactiveMode}
             />
           </div>
         </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-300 flex  items-center justify-center">
-          =
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex  items-center justify-center"
+          style={{
+            fontSize: '4rem',
+            textShadow: `
+          0 0 .5rem #5ed2e5,
+          0 0 1rem #5ed2e5,
+          0 0 2rem  #5ed2e5
+        `,
+            overflow: 'visible',
+          }}
+        >
+          {comparison()}
         </div>
-        <div className="absolute top-1/2 right-1/3 translate-x-1/2 -translate-y-1/2 bg-gray-300 h-full ">
+        <div
+          className="absolute top-1/2 right-1/3 translate-x-1/2 -translate-y-1/2 h-full "
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,0) 100%)',
+            width: `${Math.max(boxHeight * 1.5, 16 * 16)}px`,
+          }}
+        >
           <div
             className="w-full flex flex-col items-center justify-center"
-            style={{ height: '95%' }}
+            style={{ height: '90%' }}
           >
             <CompareZone
               x={0}
@@ -315,11 +368,15 @@ export default function Home() {
               isDragging={isDragging}
             />
           </div>
-          <div className="w-full" style={{ height: '5%' }}>
+          <div
+            className="w-full flex flex-row items-center  justify-center"
+            style={{ height: '10%' }}
+          >
             <Label
               text={numRightBoxes}
               input={setNumRightBoxes}
               inputMode={isInputMode}
+              interactiveMode={interactiveMode}
             />
           </div>
         </div>
@@ -330,37 +387,60 @@ export default function Home() {
         setInteractiveMode={setInteractiveMode}
         inputMode={isInputMode}
         setInputMode={setIsInputMode}
+        toggleAlignLines={toggleAlignLines}
+        alignLines={alignLines}
+        numLeftBoxes={numLeftBoxes}
+        numRightBoxes={numRightBoxes}
       />
       {/* Compare Lines */}
-      {interactiveMode === 'compare' && (
-        <Line
-          div1Ref={topLeftRef}
-          div2Ref={topRightRef}
-          interactiveMode={interactiveMode}
-          visible={isTopVisible}
+      <Line
+        div1Ref={topLeftRef}
+        div2Ref={topRightRef}
+        interactiveMode={interactiveMode}
+        visible={isTopVisible}
+        alignLines={alignLines}
+        alignShape={comparison()}
+        top={true}
+        widgetRef={divRef}
+      />
+
+      <Line
+        div1Ref={bottomLeftRef}
+        div2Ref={bottomRightRef}
+        interactiveMode={interactiveMode}
+        visible={isBottomVisible}
+        alignLines={alignLines}
+        alignShape={comparison()}
+        top={false}
+        widgetRef={divRef}
+      />
+      <svg
+        className="absolute inset-0 pointer-events-none w-full h-full"
+        style={{ opacity: isDragging ? 1 : 0 }}
+      >
+        {/* while dragging, show a line from source center to current mouse position */}
+        <line
+          x1={sourceCenter.x}
+          y1={sourceCenter.y}
+          x2={mousePos.x}
+          y2={mousePos.y}
+          stroke="rgba(183,244,239,255)"
+          strokeWidth={20}
+          strokeLinecap="round"
         />
-      )}{' '}
-      {interactiveMode === 'compare' && (
-        <Line
-          div1Ref={bottomLeftRef}
-          div2Ref={bottomRightRef}
-          interactiveMode={interactiveMode}
-          visible={isBottomVisible}
+        <line
+          x1={sourceCenter.x}
+          y1={sourceCenter.y}
+          x2={mousePos.x}
+          y2={mousePos.y}
+          stroke="white"
+          strokeWidth={10}
+          strokeLinecap="round"
         />
-      )}
-      {isDragging && (
-        <svg className="absolute inset-0 pointer-events-none w-full h-full">
-          {/* while dragging, show a line from source center to current mouse position */}
-          <line
-            x1={sourceCenter.x}
-            y1={sourceCenter.y}
-            x2={mousePos.x}
-            y2={mousePos.y}
-            stroke="black"
-            strokeWidth={2}
-          />
-        </svg>
-      )}
+      </svg>
+      <div style={{ position: 'fixed', bottom: 0, right: 0 }}>
+        <ToastContainer closeOnClick={true} position="bottom-right" />
+      </div>
     </div>
   );
 }

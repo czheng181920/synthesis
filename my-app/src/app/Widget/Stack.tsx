@@ -25,7 +25,10 @@ export default function Stack({
 }: StackProps) {
   const [isDragging, setIsDragging] = useState(false);
 
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      e.stopPropagation();
+    }
     if (interactiveMode === 'addRemove') {
       incrementBox(left, true, isDragging);
     }
@@ -33,8 +36,11 @@ export default function Stack({
 
   return (
     <motion.div
-      className={`relative flex flex-col p-1 items-center justify-center w-full bg-gray-500`}
-      style={{ gap: `${gap}px`, transition: 'all 2s ease' }}
+      className={`relative flex flex-col p-1 items-center justify-center w-full`}
+      style={{
+        gap: `${gap}px`,
+        transition: interactiveMode === 'compare' ? '0s' : 'all 2s ease',
+      }}
       onClick={onClick}
     >
       {Array.from({ length: numBoxes }).map((_, i) => (
@@ -45,6 +51,7 @@ export default function Stack({
           setDragging={setIsDragging}
           incrementBox={incrementBox}
           interactiveMode={interactiveMode}
+          index={i}
         />
       ))}
     </motion.div>

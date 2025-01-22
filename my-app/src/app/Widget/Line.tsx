@@ -1,30 +1,29 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-interface Coordinates {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
 const Line = ({
   div1Ref,
   div2Ref,
   interactiveMode,
   visible,
+  alignLines,
+  alignShape,
+  top,
+  widgetRef,
 }: {
   div1Ref: React.RefObject<HTMLDivElement | null>;
   div2Ref: React.RefObject<HTMLDivElement | null>;
   interactiveMode: string;
   visible: boolean;
+  top: boolean; // true if the line is the top line
+  alignLines?: boolean; // Optional flag to signal when to align the lines
+  alignShape?: string; // Optional prop to align the endpoint of the line to a  < > or = shape
+  widgetRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const [lineCoords, setLineCoords] = useState<Coordinates>({
-    x1: 0,
-    y1: 0,
-    x2: 0,
-    y2: 0,
-  });
+  const [x1, setX1] = useState(0);
+  const [y1, setY1] = useState(0);
+  const [x2, setX2] = useState(0);
+  const [y2, setY2] = useState(0);
 
   const updateLineCoordinates = () => {
     if (div1Ref.current && div2Ref.current) {
@@ -32,11 +31,32 @@ const Line = ({
       const rect2 = div2Ref.current.getBoundingClientRect();
 
       const x1 = rect1.left + rect1.width / 2;
-      const y1 = rect1.top + rect1.height / 2;
+      let y1 = rect1.top + rect1.height / 2;
       const x2 = rect2.left + rect2.width / 2;
-      const y2 = rect2.top + rect2.height / 2;
+      let y2 = rect2.top + rect2.height / 2;
 
-      setLineCoords({ x1, y1, x2, y2 });
+      if (alignLines && widgetRef && widgetRef.current) {
+        const widgetRect = widgetRef.current.getBoundingClientRect();
+
+        if (top) {
+          y1 = (widgetRect.height / 12) * 5;
+          y2 = (widgetRect.height / 12) * 5;
+        }
+        if (!top) {
+          y1 = (widgetRect.height / 12) * 7;
+          y2 = (widgetRect.height / 12) * 7;
+        }
+        if (alignShape === '<') {
+          y1 = widgetRect.height / 2;
+        }
+        if (alignShape === '>') {
+          y2 = widgetRect.height / 2;
+        }
+      }
+      setX1(x1);
+      setY1(y1);
+      setX2(x2);
+      setY2(y2);
     }
   };
 
@@ -47,28 +67,36 @@ const Line = ({
     return () => {
       window.removeEventListener('resize', updateLineCoordinates);
     };
-  }, []);
-  const variants = {
-    hidden: { opacity: 0 },
-    active: { opacity: 1 },
-  };
+  }, [alignLines, alignShape, visible, interactiveMode]);
+
+  // need to change it back when not align lines
+
   return (
     <motion.div
       className="absolute inset-0 pointer-events-none w-full h-full"
-      initial="hidden"
-      animate={visible ? 'active' : 'hidden'}
-      exit="hidden"
-      variants={variants}
+      initial={{ opacity: 0 }}
+      exit={{ opacity: 0 }}
+      animate={
+        visible && interactiveMode === 'compare'
+          ? { opacity: 1 }
+          : { opacity: 0 }
+      }
       transition={{ duration: 0.5 }}
     >
       <svg className="absolute inset-0 pointer-events-none w-full h-full">
-        <line
-          x1={lineCoords.x1}
-          y1={lineCoords.y1}
-          x2={lineCoords.x2}
-          y2={lineCoords.y2}
-          stroke="black"
-          strokeWidth={2}
+        <motion.line
+          animate={{ x1, y1, x2, y2 }}
+          stroke="rgba(183,244,239,255)"
+          strokeWidth={20}
+          transition={{ duration: 0.5 }}
+          strokeLinecap="round"
+        />
+        <motion.line
+          animate={{ x1, y1, x2, y2 }}
+          stroke="white"
+          strokeWidth={10}
+          transition={{ duration: 0.5 }}
+          strokeLinecap="round"
         />
       </svg>
     </motion.div>

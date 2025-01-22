@@ -61,14 +61,16 @@ export default function CompareZone({
           exit="hidden"
           variants={variants}
           transition={{ duration: 0.25 }}
-          className={`bg-orange-500`}
           style={{
             height: `${boxHeight}px`,
             width: `${boxHeight}px`,
+            background:
+              'radial-gradient(circle, rgba(183,244,239,.9) 0%, rgba(183,244,239,0) 75%, rgba(183,244,239,1) 100%)',
+            borderRadius: '50%',
           }}
           onClick={handleClick}
           ref={ref}
-          onMouseDown={opaque ? undefined : dragStart}
+          onMouseDown={active ? undefined : dragStart}
         ></motion.div>
       )}
     </>
