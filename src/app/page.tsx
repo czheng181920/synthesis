@@ -219,6 +219,16 @@ export default function Home() {
         theme: 'light',
         transition: Bounce,
       });
+    } else if (interactiveMode === 'addRemove' && !alignLines) {
+      toast.warn('Unable to see animation because you are in add/remove mode', {
+        autoClose: 5000,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'light',
+        transition: Bounce,
+      });
     } else if (!alignLines) {
       setAlignLines(true);
     } else {
